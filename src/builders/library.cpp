@@ -97,7 +97,6 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
         project_include /= include_path;
         project_include = std::filesystem::absolute(project_include);
 
-        debug("Including: %s", project_include.c_str());
         if (fs::exists(project_include)) {
           headers.insert(fs::canonical(project_include));
           continue;
@@ -128,6 +127,8 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
     return CompileResult::FAILURE;
   }
 
+  info("Emitting: %s", lib_data.emitName.c_str());
+
   output_file << "#pragma once\n"
                  "/************************************************************"
                  "******************************\n"
@@ -149,7 +150,7 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
           included.insert(path);
         }
 #ifdef NOB_DEBUG
-        else {
+        else if (included.find(path) == included.end()) {
           debug("------------------------");
           debug("%s requires", path.c_str());
           for (const auto a : header.includes) {

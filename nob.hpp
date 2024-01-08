@@ -29,7 +29,6 @@ struct Data {
 } // namespace library
 } // namespace nob
 
-
 #include <ctime>
 #include <filesystem>
 #include <string>
@@ -43,7 +42,6 @@ std::tuple<bool, std::string> get_include_from_line(const std::string &line);
 bool should_recompile(const std::filesystem::path &output_file,
                       const std::vector<std::filesystem::path> paths);
 } // namespace nob
-
 
 #include <map>
 #include <string>
@@ -72,8 +70,6 @@ private:
 };
 
 } // namespace nob
-
-
 
 namespace nob {
 class Library {
@@ -110,7 +106,6 @@ std::tuple<std::string, std::string> get_current_compilers();
 template <typename T>
 bool set_includes_all(std::set<T> set, std::vector<T> vector);
 } // namespace nob
-
 
 namespace nob::library {
 CompileResult build(const std::string &name, const Data libData);
@@ -523,7 +518,6 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
         project_include /= include_path;
         project_include = std::filesystem::absolute(project_include);
 
-        debug("Including: %s", project_include.c_str());
         if (fs::exists(project_include)) {
           headers.insert(fs::canonical(project_include));
           continue;
@@ -554,6 +548,8 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
     return CompileResult::FAILURE;
   }
 
+  info("Emitting: %s", lib_data.emitName.c_str());
+
   output_file << "#pragma once\n"
                  "/************************************************************"
                  "******************************\n"
@@ -575,7 +571,7 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
           included.insert(path);
         }
 #ifdef NOB_DEBUG
-        else {
+        else if (included.find(path) == included.end()) {
           debug("------------------------");
           debug("%s requires", path.c_str());
           for (const auto a : header.includes) {
