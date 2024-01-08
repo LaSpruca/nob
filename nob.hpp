@@ -573,13 +573,20 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
           included_once = true;
           output_file << (header.content) << "\n";
           included.insert(path);
-        } else {
+        }
+#ifdef NOB_DEBUG
+        else {
           debug("------------------------");
           debug("%s requires", path.c_str());
           for (const auto a : header.includes) {
-            debug("- %s", a.c_str());
+            if (included.find(a) == included.end()) {
+              debug("[✗] %s", a.c_str());
+            } else {
+              debug("[✔] %s", a.c_str());
+            }
           }
         }
+#endif
       }
 
       if (!included_once) {
