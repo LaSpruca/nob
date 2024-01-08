@@ -128,7 +128,13 @@ CompileResult build_header_only(const std::string &name, const Data lib_data) {
     return CompileResult::FAILURE;
   }
 
-  output_file << "#pragma once\n";
+  output_file << "#pragma once\n"
+                 "/************************************************************"
+                 "******************************\n"
+              << lib_data.emitName.string()
+              << " was built by nob, do not edit\n"
+                 "*************************************************************"
+                 "*****************************/\n";
 
   std::set<fs::path> included{};
   if (header_map.size() > 0) {

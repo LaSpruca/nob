@@ -1,6 +1,7 @@
 #include "nob.hpp"
 
 int configure_build(nob::BuildConfig &builder) {
+  // Compile nob
   nob::Library lib = builder.create_library("nob");
   lib.emit("nob.hpp", nob::library::Emit::HEADER_ONLY);
   lib.set_root(std::filesystem::u8path(__FILE__).parent_path());

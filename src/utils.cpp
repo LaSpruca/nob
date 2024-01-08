@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <set>
@@ -57,10 +58,35 @@ std::tuple<std::string, std::string> get_current_compilers() {
 #endif
 }
 
-void rebuild_self() {
+void rebuild_self(int argc, char **argv, bool invoke_self) {
   info("Rebuilding NOB");
   const auto [_, cpp] = get_current_compilers();
-  const std::string exec(cpp + " " + __BASE_FILE__ + " -o nob");
+  const auto cmdline = std::getenv("NOB_CMDLINE");
+  std::ostringstream ss;
+  ss << cpp << " " __BASE_FILE__ " -o nob";
+  if (cmdline != nullptr) {
+    ss << " " << cmdline;
+  }
+  std::string command = ss.str();
+  info("Executing: %s", command.c_str());
+  std::system(command.c_str());
+
+  if (!invoke_self) {
+    std::exit(0);
+  }
+
+  ss = std::ostringstream();
+
+  for (int i = 0; i < argc; i++) {
+    ss << "\"" << argv[i] << "\""
+       << " ";
+  }
+
+  command = ss.str();
+
+  info("Executing: %s", command.c_str());
+  std::system(command.c_str());
+  std::exit(0);
 }
 
 std::string trim(std::string s) {
@@ -100,29 +126,36 @@ bool set_includes_all(std::set<T> set, std::vector<T> vector) {
   return true;
 }
 
+bool set_includes_all(std::set<std::filesystem::path> set,
+                      std::vector<std::filesystem::path> vector) {
+  return set_includes_all<std::filesystem::path>(set, vector);
+}
 } // namespace nob
 
 int configure_build(nob::BuildConfig &config);
 
 int main(int argc, char **argv) {
-  if (nob::should_recompile(
-          argv[0], std::vector{std::filesystem::path(__BASE_FILE__)})) {
-    nob::rebuild_self();
-  }
-
-  nob::BuildConfig config;
-  configure_build(config);
-
   if (argc < 2) {
     nob::error("Please specify an opperation");
     std::cout << "Opperations: \n"
                  "\tbuild, b <target> build a target\n"
-                 "\trun, r <binary> build and run a binary"
+                 "\trun, r <binary> build and run a binary\n"
+                 "\trebuild, R rebuild nob"
               << std::endl;
     return 1;
   }
 
   std::string command(argv[1]);
+  if (nob::should_recompile(
+          argv[0], std::vector{std::filesystem::path(__BASE_FILE__)}) ||
+      nob::should_recompile(argv[0],
+                            std::vector{std::filesystem::path(__FILE__)}) ||
+      command == "rebuild" || command == "R") {
+    nob::rebuild_self(argc, argv, !(command == "rebuild" || command == "R"));
+  }
+
+  nob::BuildConfig config;
+  configure_build(config);
 
   if (command == "build" || command == "b") {
     if (argc < 3) {
